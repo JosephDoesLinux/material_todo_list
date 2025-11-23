@@ -1,0 +1,11 @@
+class Task {
+  String title;
+  bool isCompleted;
+
+  Task(this.title, this.isCompleted);
+
+  @override
+  String toString() {
+    return title;
+  }
+}
