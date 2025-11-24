@@ -1,4 +1,4 @@
-# material_todo_list
+# material_todo_list by Joseph Abou Antoun 52330567
 
 A new Flutter project.
 
