@@ -100,7 +100,7 @@ class _HomeState extends State<Home> {
                         toggleTask(task, val);
                       },
                     ),
-                    // styling here used to change color when done, takes bool isCompleted
+                    // Display text, change color if done
                     Text(
                       task.toString(),
                       style: TextStyle(
