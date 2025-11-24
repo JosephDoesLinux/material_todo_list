@@ -60,79 +60,108 @@ class _HomeState extends State<Home> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          "Functional todo list that just works until you close it",
+          "Material To-Do List",
         ),
-
+        centerTitle: false,
+        // stealing the material 3 inverse primary color so it matches the pixel vibe
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         // yeah app bar is just the top bar, wont center it
       ),
-      body: Center(
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            // input goes here
-            SizedBox(
-              width: 300.0,
-              height: 50.0,
-              child: TextField(
-                controller: _controller,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'Enter a new task',
-                ),
-              ),
-            ),
-            // wont change styling, maybe later
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: addTask,
-              child: const Text('Add Task'),
-            ),
-            const SizedBox(height: 20.0),
+      // we're moving the main layout into a column so we can push the input field to the bottom
+      body: Column(
+        children: [
+          // the list title is still at the top
+          const SizedBox(height: 20.0),
+          const Text('Your Tasks:', style: TextStyle(fontSize: 22.0, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10.0),
 
-            const Text('Your Tasks:', style: TextStyle(fontSize: 22.0, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10.0),
-            // will use list map here, we used that before in students list and employees
-
-            // map function to convert tasks to widgets
-            // added checkbox and text styling for done tasks
-            Column(
-              children: tasks.map((Task task) {
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // basic checkbox
-                    Checkbox(
-                      value: task.isCompleted,
-                      onChanged: (bool? val) {
-                        toggleTask(task, val);
-                      },
-                    ),
-                    // Display text, change color if done
-                    // apparently this part is like flex, i think we used it before but i honestly had to google this one
-                    Expanded(
-                      child: Text(
-                        task.toString(),
-                        style: TextStyle(
-                          fontSize: 18.0,
-                          color: task.isCompleted ? Colors.grey : Colors.black,
-                          decoration: task.isCompleted ? TextDecoration.lineThrough : null,
-                        ),
+          // this is the main list area, wrapped in Expanded to take up all available space
+          // using Card (which we used in Week 5) to give the items a pill-box style
+          Expanded(
+            child: SingleChildScrollView( // added SingleChildScrollView just in case the list gets too long
+              child: Column(
+                children: tasks.map((Task task) {
+                  return Card(
+                    // a little margin here makes each task look like a separate pill
+                    margin: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+                    // using primary container color for that clean Material You background look
+                    color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.5),
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 5.0),
+                      child: Row(
+                        // changed to spaceBetween to neatly push the delete button to the edge
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // basic checkbox
+                          Checkbox(
+                            value: task.isCompleted,
+                            onChanged: (bool? val) {
+                              toggleTask(task, val);
+                            },
+                          ),
+                          // Display text, change color if done
+                          // apparently this part is like flex, i think we used it before but i honestly had to google this one
+                          Expanded(
+                            child: Text(
+                              task.toString(),
+                              style: TextStyle(
+                                fontSize: 18.0,
+                                color: task.isCompleted ? Colors.grey : Colors.black,
+                                decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+                              ),
+                            ),
+                          ),
+                          // Delete Button
+                          // Used ElevatedButton, we took that Week 7, had to google most of it tho since we didnt do much
+                          ElevatedButton(
+                            onPressed: () {
+                              deleteTask(task);
+                            },
+                            // using the system error color so it looks legit instead of just red
+                            child: Icon(Icons.delete, color: Theme.of(context).colorScheme.error)
+                          )
+                        ],
                       ),
                     ),
-                    // Delete Button
-                    // Used ElevatedButton, we took that Week 7, had to google most of it tho since we didnt do much
-                    ElevatedButton(
-                      onPressed: () {
-                        deleteTask(task);
-                      }, 
-                      child: const Icon(Icons.delete, color: Colors.red)
-                    )
-                  ],
-                );
-              }).toList(),
+                  );
+                }).toList(),
+              ),
             ),
-          ],
-        ),
+          ),
+          
+          // this is the new input section at the bottom
+          // we use Padding to make sure it doesn't touch the screen edges (looks better on Pixel/Android)
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                // input goes here
+                Expanded(
+                  child: SizedBox(
+                    height: 50.0,
+                    child: TextField(
+                      controller: _controller,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: 'Enter a new task',
+                        // this padding helps the hint text look right in the Material You box
+                        contentPadding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 10.0),
+                      ),
+                    ),
+                  ),
+                ),
+                // this is the floating action button replacement!
+                // it looks way cleaner than a regular elevated button for adding one item
+                const SizedBox(width: 8.0),
+                FloatingActionButton(
+                  onPressed: addTask,
+                  // using the theme's primary color for the icon so it changes with the Material You scheme
+                  child: Icon(Icons.add, color: Theme.of(context).colorScheme.onPrimary),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
