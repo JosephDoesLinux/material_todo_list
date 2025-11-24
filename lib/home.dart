@@ -31,6 +31,13 @@ class _HomeState extends State<Home> {
     }
   }
 
+  // Added this function to handle deletion
+  void deleteTask(Task task) {
+    setState(() {
+      tasks.remove(task);
+    });
+  }
+
   void toggleTask(Task task, bool? val) {
     // as you can clearly see, the class here toggles the task, very efficient
     setState(() {
@@ -93,7 +100,7 @@ class _HomeState extends State<Home> {
                 return Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Checkbox from Week 6
+                    // basic checkbox
                     Checkbox(
                       value: task.isCompleted,
                       onChanged: (bool? val) {
@@ -101,14 +108,25 @@ class _HomeState extends State<Home> {
                       },
                     ),
                     // Display text, change color if done
-                    Text(
-                      task.toString(),
-                      style: TextStyle(
-                        fontSize: 18.0,
-                        color: task.isCompleted ? Colors.grey : Colors.black,
-                        decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+                    // apparently this part is like flex, i think we used it before but i honestly had to google this one
+                    Expanded(
+                      child: Text(
+                        task.toString(),
+                        style: TextStyle(
+                          fontSize: 18.0,
+                          color: task.isCompleted ? Colors.grey : Colors.black,
+                          decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+                        ),
                       ),
                     ),
+                    // Delete Button
+                    // Used ElevatedButton, we took that Week 7, had to google most of it tho since we didnt do much
+                    ElevatedButton(
+                      onPressed: () {
+                        deleteTask(task);
+                      }, 
+                      child: const Icon(Icons.delete, color: Colors.red)
+                    )
                   ],
                 );
               }).toList(),
