@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'models/list.dart';
-
 // You would need to add 'url_launcher' to your pubspec.yaml file
-import 'package:url_launcher/url_launcher.dart'; // NOTE: Commented out to adhere to no external package code unless explicitly told
+import 'package:url_launcher/url_launcher.dart'; 
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -156,42 +155,46 @@ class _HomeState extends State<Home> {
                     margin: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
                     // using primary container color for that clean Material You background look
                     color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.5),
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 5.0),
-                      child: Row(
-                        // changed to spaceBetween to neatly push the delete button to the edge
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // basic checkbox
-                          Checkbox(
-                            value: task.isCompleted,
-                            onChanged: (bool? val) {
-                              toggleTask(task, val);
-                            },
-                          ),
-                          // Display text, change color if done
-                          // apparently this part is like flex, i think we used it before but i honestly had to google this one
-                          Expanded(
+                    child: Row(
+                      // changed to spaceBetween to neatly push the delete button to the edge
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // basic checkbox
+                        Checkbox(
+                          value: task.isCompleted,
+                          onChanged: (bool? val) {
+                            toggleTask(task, val);
+                          },
+                          // Make the active color use the theme's primary color, looks more integrated
+                          activeColor: Theme.of(context).colorScheme.primary,
+                        ),
+                        // Display text, change color if done
+                        // apparently this part is like flex, i think we used it before but i honestly had to google this one
+                        Expanded(
+                          // Adding a little horizontal padding for text cleanliness
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
                             child: Text(
                               task.toString(),
                               style: TextStyle(
                                 fontSize: 18.0,
-                                color: task.isCompleted ? Colors.grey : Colors.black,
+                                // Fixed: Use onSurface color for default text to ensure dark mode compatibility
+                                color: task.isCompleted ? Colors.grey : Theme.of(context).colorScheme.onSurface,
                                 decoration: task.isCompleted ? TextDecoration.lineThrough : null,
                               ),
                             ),
                           ),
-                          // Delete Button
-                          // Used ElevatedButton, we took that Week 7, had to google most of it tho since we didnt do much
-                          ElevatedButton(
-                            onPressed: () {
-                              deleteTask(task);
-                            },
-                            // using the system error color so it looks legit instead of just red
-                            child: Icon(Icons.delete, color: Theme.of(context).colorScheme.error)
-                          )
-                        ],
-                      ),
+                        ),
+                        // Delete Button: Changed from an ElevatedButton to a simpler, cleaner IconButton
+                        // Used ElevatedButton, we took that Week 7, had to google most of it tho since we didnt do much
+                        IconButton(
+                          onPressed: () {
+                            deleteTask(task);
+                          },
+                          // using the system error color so it looks legit instead of just red
+                          icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error)
+                        )
+                      ],
                     ),
                   );
                 }).toList(),
