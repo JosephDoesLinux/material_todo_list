@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'models/list.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 // You would need to add 'url_launcher' to your pubspec.yaml file
 import 'package:url_launcher/url_launcher.dart';
 
@@ -11,33 +13,78 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  final List<Task> tasks = [
-    Task("Task 1", "Details 1", false),
-    Task("Task 2", "Details 2", true),
-    Task("Task 3", "Details 3", false),
-  ];
+  List<Task> tasks = [];
   final TextEditingController _controller = TextEditingController();
 
-  void addTask() {
-    String text = _controller.text;
-    if (text.trim() != '') {
-      setState(() {
-        tasks.add(Task(text, "", false));
-        _controller.text = '';
-      });
+  @override
+  void initState() {
+    super.initState();
+    getTasks();
+  }
+
+  void getTasks() async {
+    final uri = Uri.parse("http://localhost/material_todo_list/getTasks.php");
+    try {
+      final response = await http.get(uri);
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        setState(() {
+          tasks.clear();
+          for (var item in jsonResponse) {
+            tasks.add(
+              Task(
+                int.parse(item['id'].toString()),
+                item['title'].toString(),
+                item['details']?.toString() ?? "",
+                item['is_completed'].toString() == '1',
+              ),
+            );
+          }
+        });
+      }
+    } catch (error) {
+      print("Error fetching tasks: $error");
     }
   }
 
-  void deleteTask(Task task) {
-    setState(() {
-      tasks.remove(task);
-    });
+  void addTask() async {
+    String text = _controller.text;
+    if (text.trim() != '') {
+      final uri = Uri.parse("http://localhost/material_todo_list/addTask.php");
+      try {
+        await http.post(uri, body: {"title": text, "details": ""});
+        _controller.text = '';
+        getTasks();
+      } catch (error) {
+        print("Error adding task: $error");
+      }
+    }
   }
 
-  void toggleTask(Task task, bool? val) {
-    setState(() {
-      task.isCompleted = val as bool;
-    });
+  void deleteTask(Task task) async {
+    final uri = Uri.parse("http://localhost/material_todo_list/deleteTask.php");
+    try {
+      await http.post(uri, body: {"id": task.id.toString()});
+      getTasks();
+    } catch (error) {
+      print("Error deleting task: $error");
+    }
+  }
+
+  void toggleTask(Task task, bool? val) async {
+    final uri = Uri.parse("http://localhost/material_todo_list/updateTask.php");
+    try {
+      await http.post(
+        uri,
+        body: {
+          "id": task.id.toString(),
+          "is_completed": (val == true ? 1 : 0).toString(),
+        },
+      );
+      getTasks();
+    } catch (error) {
+      print("Error updating task: $error");
+    }
   }
 
   void _launchUrl() async {
