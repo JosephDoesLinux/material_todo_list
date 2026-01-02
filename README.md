@@ -15,3 +15,7 @@ For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
 # material_todo_list
+
+PHP folder contains files for API and SQL database, import those in your prefered php & sql hosting program such as XAMPP, enter link to API in lib/lists.dart
+
+:)
