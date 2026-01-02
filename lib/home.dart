@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'details.dart';
 
+// this is the main page of the app
 class Home extends StatefulWidget {
   const Home({super.key});
 
@@ -14,19 +15,25 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  // list to store all the tasks
   List<Task> tasks = [];
+  // list to store the tasks that match the search query
+  List<Task> filteredTasks = [];
   //added text editing contorller, we took that in week 7 i think
   final TextEditingController _controller = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   // underscore means private i think, hi doctor yes im doing this at midnight
 
   @override
   void initState() {
     super.initState();
+    // fetch the tasks when the app starts
     getTasks();
   }
 
+  // function to get the tasks from the server
   void getTasks() async {
-    final uri = Uri.parse("http://localhost/material_todo_list/getTasks.php");
+    final uri = Uri.parse("$baseUrl/getTasks.php");
     try {
       final response = await http.get(uri);
       if (response.statusCode == 200) {
@@ -43,10 +50,28 @@ class _HomeState extends State<Home> {
               ),
             );
           }
+          // update the filtered list as well
+          _runFilter(_searchController.text);
         });
       }
     } catch (error) {
       print("Error fetching tasks: $error");
+    }
+  }
+
+  // function to filter the tasks based on the search query
+  void _runFilter(String enteredKeyword) {
+    if (enteredKeyword.isEmpty) {
+      // if the search query is empty, show all tasks
+      filteredTasks = List.from(tasks);
+    } else {
+      // otherwise, show only the tasks that match the query
+      filteredTasks = tasks
+          .where(
+            (task) =>
+                task.title.toLowerCase().contains(enteredKeyword.toLowerCase()),
+          )
+          .toList();
     }
   }
 
@@ -55,8 +80,9 @@ class _HomeState extends State<Home> {
     String text = _controller.text;
     if (text.trim() != '') {
       // trim gives the text a good haircut with a low taper fade
-      final uri = Uri.parse("http://localhost/material_todo_list/addTask.php");
+      final uri = Uri.parse("$baseUrl/addTask.php");
       try {
+        // sending the new task to the server
         final response = await http.post(
           uri,
           body: {"title": text, "details": ""},
@@ -75,19 +101,25 @@ class _HomeState extends State<Home> {
             false,
           );
 
+          // Add to local list immediately so we don't have to fetch everything again
+          setState(() {
+            tasks.add(newTask);
+            _runFilter(_searchController.text);
+          });
+
           // Navigate to details page
           if (mounted) {
+            // wait for the user to come back from the details page
             bool? result = await Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (context) => DetailsPage(task: newTask),
               ),
             );
+            // if the user saved the task, refresh the list
             if (result == true) {
               getTasks();
-            } else {
-              // Even if they didn't save changes in details, we should refresh to show the new task
-              getTasks();
             }
+            // removed the else block because we already added it locally
           }
         }
       } catch (error) {
@@ -98,19 +130,33 @@ class _HomeState extends State<Home> {
 
   // Added this function to handle deletion
   void deleteTask(Task task) async {
-    final uri = Uri.parse("http://localhost/material_todo_list/deleteTask.php");
+    // update the UI immediately by removing the task from the list
+    setState(() {
+      tasks.removeWhere((t) => t.id == task.id);
+      filteredTasks.removeWhere((t) => t.id == task.id);
+    });
+
+    final uri = Uri.parse("$baseUrl/deleteTask.php");
     try {
+      // tell the server to delete the task
       await http.post(uri, body: {"id": task.id.toString()});
-      getTasks();
+      // no need to call getTasks() anymore since we updated the UI locally
     } catch (error) {
       print("Error deleting task: $error");
     }
   }
 
+  // function to toggle the task completion status
   void toggleTask(Task task, bool? val) async {
+    // update the UI immediately
+    setState(() {
+      task.isCompleted = val ?? false;
+    });
+
     // as you can clearly see, the class here toggles the task, very efficient
-    final uri = Uri.parse("http://localhost/material_todo_list/updateTask.php");
+    final uri = Uri.parse("$baseUrl/updateTask.php");
     try {
+      // update the task status on the server
       await http.post(
         uri,
         body: {
@@ -118,7 +164,7 @@ class _HomeState extends State<Home> {
           "is_completed": (val == true ? 1 : 0).toString(),
         },
       );
-      getTasks();
+      // no need to call getTasks() anymore
     } catch (error) {
       print("Error updating task: $error");
     }
@@ -214,42 +260,70 @@ class _HomeState extends State<Home> {
         // yeah app bar is just the top bar, wont center it
         // adding a list of widgets here for the action buttons
         actions: <Widget>[
-          // adding the question mark button to show the project info dialog
           IconButton(
             icon: const Icon(Icons.help_outline), // good icon for "info"
             onPressed: () => _showProjectInfo(context), // call the new function
           ),
+          // refresh button to reload the tasks
+          IconButton(icon: const Icon(Icons.refresh), onPressed: getTasks),
+
+          // adding the question mark button to show the project info dialog
         ],
       ),
       // we're moving the main layout into a column so we can push the input field to the bottom
       body: Column(
+        // using a column to stack the search bar, list, and input area vertically
         children: [
-          // the list title is still at the top
-          const SizedBox(height: 20.0),
+          Padding(
+            // padding around the search bar for breathing room
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) => setState(() => _runFilter(value)),
+              decoration: const InputDecoration(
+                labelText: 'Search',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ),
           const Text(
             'Your Tasks:',
             style: TextStyle(fontSize: 22.0, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 10.0),
+          const SizedBox(height: 10.0), // small gap
           // this is the main list area, wrapped in Expanded to take up all available space
           // using Card (which we used in Week 5) to give the items a pill-box style
           Expanded(
+            // expanded is crucial here, it tells the list to take up all remaining vertical space
             // added SingleChildScrollView just in case the list gets too long
             child: SingleChildScrollView(
               child: Column(
-                children: tasks.map((Task task) {
-                  return Card(
-                    // a little margin here makes each task look like a separate pill
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 10.0,
-                      vertical: 4.0,
+                children: filteredTasks.map((Task task) {
+                  // dismissible widget allows us to swipe the task to delete or edit
+                  return Dismissible(
+                    key: Key(task.id.toString()),
+                    // background for swipe right (edit)
+                    background: Container(
+                      color: Colors.blue,
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.only(left: 20.0),
+                      child: const Icon(Icons.info, color: Colors.white),
                     ),
-                    // using primary container color for that clean Material You background look
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primaryContainer.withOpacity(0.5),
-                    child: InkWell(
-                      onTap: () async {
+                    // background for swipe left (delete)
+                    secondaryBackground: Container(
+                      color: Colors.red,
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 20.0),
+                      child: const Icon(Icons.delete, color: Colors.white),
+                    ),
+                    // confirm dismiss is called when the user swipes
+                    confirmDismiss: (direction) async {
+                      if (direction == DismissDirection.endToStart) {
+                        // if swipe left, delete the task
+                        return true;
+                      } else {
+                        // if swipe right, go to details page
                         bool? result = await Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) => DetailsPage(task: task),
@@ -258,77 +332,113 @@ class _HomeState extends State<Home> {
                         if (result == true) {
                           getTasks();
                         }
-                      },
-                      child: Row(
-                        // changed to spaceBetween to neatly push the delete button to the edge
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          // basic checkbox
-                          Checkbox(
-                            value: task.isCompleted,
-                            onChanged: (bool? val) {
-                              toggleTask(task, val);
-                            },
-                            // Make the active color use the theme's primary color, looks more integrated
-                            activeColor: Theme.of(context).colorScheme.primary,
-                          ),
-                          // Display text, change color if done
-                          // apparently this part is like flex, i think we used it before but i honestly had to google this one
-                          Expanded(
-                            // Adding a little horizontal padding for text cleanliness
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8.0,
-                                vertical: 12.0,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    task.title,
-                                    style: TextStyle(
-                                      fontSize: 18.0,
-                                      // Fixed: Use onSurface color for default text to ensure dark mode compatibility
-                                      color: task.isCompleted
-                                          ? Colors.grey
-                                          : Theme.of(
-                                              context,
-                                            ).colorScheme.onSurface,
-                                      decoration: task.isCompleted
-                                          ? TextDecoration.lineThrough
-                                          : null,
+                        return false;
+                      }
+                    },
+                    onDismissed: (direction) {
+                      if (direction == DismissDirection.endToStart) {
+                        deleteTask(task);
+                      }
+                    },
+                    child: Card(
+                      // a little margin here makes each task look like a separate pill
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 10.0,
+                        vertical: 4.0,
+                      ),
+                      // using primary container color for that clean Material You background look
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primaryContainer.withOpacity(0.5),
+                      child: InkWell(
+                        onTap: () async {
+                          bool? result = await Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => DetailsPage(task: task),
+                            ),
+                          );
+                          if (result == true) {
+                            getTasks();
+                          }
+                        },
+                        child: Row(
+                          // changed to spaceBetween to neatly push the delete button to the edge
+                          mainAxisAlignment: MainAxisAlignment
+                              .spaceBetween, // pushes children to far ends
+                          children: [
+                            // basic checkbox
+                            Checkbox(
+                              value: task.isCompleted,
+                              onChanged: (bool? val) {
+                                toggleTask(task, val);
+                              },
+                              // Make the active color use the theme's primary color, looks more integrated
+                              activeColor: Theme.of(
+                                context,
+                              ).colorScheme.primary,
+                            ),
+                            // Display text, change color if done
+                            // apparently this part is like flex, i think we used it before but i honestly had to google this one
+                            Expanded(
+                              // expanded here is important so the text takes up the middle space
+                              // and pushes the delete button to the right
+                              // Adding a little horizontal padding for text cleanliness
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8.0,
+                                  vertical: 12.0,
+                                ),
+                                child: Column(
+                                  // column for title and details stacked vertically
+                                  crossAxisAlignment: CrossAxisAlignment
+                                      .start, // align text to left
+                                  children: [
+                                    Text(
+                                      task.title,
+                                      style: TextStyle(
+                                        fontSize: 18.0,
+                                        // Fixed: Use onSurface color for default text to ensure dark mode compatibility
+                                        color: task.isCompleted
+                                            ? Colors.grey
+                                            : Theme.of(
+                                                context,
+                                              ).colorScheme.onSurface,
+                                        decoration: task.isCompleted
+                                            ? TextDecoration.lineThrough
+                                            : null,
+                                      ),
                                     ),
-                                  ),
-                                  Text(
-                                    task.details,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontSize: 14.0,
-                                      color: task.isCompleted
-                                          ? Colors.grey
-                                          : Theme.of(
-                                              context,
-                                            ).colorScheme.onSurfaceVariant,
+                                    Text(
+                                      task.details,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 14.0,
+                                        color: task.isCompleted
+                                            ? Colors.grey
+                                            : Theme.of(
+                                                context,
+                                              ).colorScheme.onSurfaceVariant,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          // Delete Button: Changed from an ElevatedButton to a simpler, cleaner IconButton
-                          // Used ElevatedButton, we took that Week 7, had to google most of it tho since we didnt do much
-                          IconButton(
-                            onPressed: () {
-                              deleteTask(task);
-                            },
-                            // using the system error color so it looks legit instead of just red
-                            icon: Icon(
-                              Icons.delete,
-                              color: Theme.of(context).colorScheme.error,
+                            // Delete Button: Changed from an ElevatedButton to a simpler, cleaner IconButton
+                            // Used ElevatedButton, we took that Week 7, had to google most of it tho since we didnt do much
+                            IconButton(
+                              onPressed: () {
+                                deleteTask(task);
+                              },
+                              // using the system error color so it looks legit instead of just red
+                              icon: Icon(
+                                Icons.delete,
+                                color: Theme.of(context).colorScheme.error,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   );
@@ -341,11 +451,13 @@ class _HomeState extends State<Home> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
+              // row to put input field and add button side by side
               children: [
                 // input goes here
                 Expanded(
+                  // expanded makes the input field take up all width except for the button
                   child: SizedBox(
-                    height: 50.0,
+                    height: 50.0, // fixed height for the input box
                     child: TextField(
                       controller: _controller,
                       decoration: const InputDecoration(
@@ -362,13 +474,13 @@ class _HomeState extends State<Home> {
                 ),
                 // this is the floating action button replacement!
                 // it looks way cleaner than a regular elevated button for adding one item
-                const SizedBox(width: 8.0),
+                const SizedBox(width: 8.0), // gap between input and button
                 FloatingActionButton(
                   onPressed: addTask,
                   // using the theme's primary color for the icon so it changes with the Material You scheme
                   child: Icon(
                     Icons.add,
-                    color: Theme.of(context).colorScheme.onPrimary,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ],

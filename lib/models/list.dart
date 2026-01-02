@@ -11,3 +11,6 @@ class Task {
     return title;
   }
 }
+
+// this is the base url for our api, so we don't have to type it every time
+const String baseUrl = "http://localhost/material_todo_list";
