@@ -106,19 +106,26 @@ class _DetailsPageState extends State<DetailsPage> {
               ],
             ),
             const SizedBox(height: 16.0),
-            TextField(
-              controller: _detailsController,
-              style: TextStyle(
-                fontSize: 16.0,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-              maxLines: null,
-              decoration: const InputDecoration(
-                labelText: 'Details',
-                border: OutlineInputBorder(),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 65.0),
+              child: TextField(
+                controller: _detailsController,
+                style: TextStyle(
+                  fontSize: 16.0,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                maxLines: null,
+                expands: true,
+                textAlignVertical: TextAlignVertical.top,
+                decoration: const InputDecoration(
+                  labelText: 'Details',
+                  border: OutlineInputBorder(),
+                  alignLabelWithHint: true,
+                ),
               ),
             ),
-          ],
+        )],
         ),
       ),
       floatingActionButton: FloatingActionButton(

@@ -57,10 +57,39 @@ class _HomeState extends State<Home> {
       // trim gives the text a good haircut with a low taper fade
       final uri = Uri.parse("http://localhost/material_todo_list/addTask.php");
       try {
-        await http.post(uri, body: {"title": text, "details": ""});
-        // set state for the thing to refresh or whatever
-        _controller.text = ''; // yes this code is human hi
-        getTasks();
+        final response = await http.post(
+          uri,
+          body: {"title": text, "details": ""},
+        );
+        final jsonResponse = jsonDecode(response.body);
+
+        if (jsonResponse['success'] == true) {
+          // set state for the thing to refresh or whatever
+          _controller.text = ''; // yes this code is human hi
+
+          // Create the new task object
+          Task newTask = Task(
+            int.parse(jsonResponse['id'].toString()),
+            text,
+            "",
+            false,
+          );
+
+          // Navigate to details page
+          if (mounted) {
+            bool? result = await Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => DetailsPage(task: newTask),
+              ),
+            );
+            if (result == true) {
+              getTasks();
+            } else {
+              // Even if they didn't save changes in details, we should refresh to show the new task
+              getTasks();
+            }
+          }
+        }
       } catch (error) {
         print("Error adding task: $error");
       }
