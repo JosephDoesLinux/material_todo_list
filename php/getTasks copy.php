@@ -1,0 +1,20 @@
+<?php
+include 'connection.php';
+
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+
+$sql = "SELECT * FROM tasks";
+
+if ($result = $con->query($sql)) {
+    $emparray = array();
+    while ($row = $result->fetch_assoc()) {
+        $emparray[] = $row;
+    }
+    echo json_encode($emparray);
+    $result->free();
+}
+
+$con->close();
+?>
