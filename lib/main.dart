@@ -1,22 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart'; // Import the new package
 import 'home.dart'; // Assuming your home screen is here
-import 'dart:io'; // needed for the http overrides
-
-// this class allows us to use self-signed certificates for https
-// which is common when developing locally or using free hosting
-class MyHttpOverrides extends HttpOverrides {
-  @override
-  HttpClient createHttpClient(SecurityContext? context) {
-    return super.createHttpClient(context)
-      ..badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true;
-  }
-}
 
 void main() {
-  // apply the overrides globally
-  HttpOverrides.global = MyHttpOverrides();
   runApp(const MyApp());
 }
 
