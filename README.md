@@ -23,3 +23,5 @@ API: [JosephDoesLinux/material_todo_api](https://github.com/JosephDoesLinux/mate
 :)
 
 <img width="964" height="1031" alt="Screenshot_20260104_004306" src="https://github.com/user-attachments/assets/e73b51f2-c7c5-4622-9b06-b453b474ad8d" />
+
+<img width="964" height="1036" alt="Screenshot_20260104_004455" src="https://github.com/user-attachments/assets/1094f534-c4b4-4b1a-8a5c-0ac5e6963d4a" />
