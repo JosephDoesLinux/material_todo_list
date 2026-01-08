@@ -134,16 +134,21 @@ class _HomeState extends State<Home> {
           // Navigate to details page
           if (mounted) {
             // wait for the user to come back from the details page
-            bool? result = await Navigator.of(context).push(
+            final result = await Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (context) => DetailsPage(task: newTask),
               ),
             );
-            // if the user saved the task, refresh the list
-            if (result == true) {
-              getTasks();
+            // if the user deleted the task in details page
+            if (result == 'delete') {
+              setState(() {
+                tasks.remove(newTask);
+                filteredTasks.remove(newTask);
+              });
+            } else if (result == true) {
+              // changes were already applied to the object, just refresh UI
+              setState(() {});
             }
-            // removed the else block because we already added it locally
           }
         }
       } catch (error) {
@@ -353,13 +358,19 @@ class _HomeState extends State<Home> {
                               return true;
                             } else {
                               // if swipe right, go to details page
-                              bool? result = await Navigator.of(context).push(
+                              final result = await Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (context) => DetailsPage(task: task),
                                 ),
                               );
-                              if (result == true) {
-                                getTasks();
+                              if (result == 'delete') {
+                                setState(() {
+                                  tasks.remove(task);
+                                  filteredTasks.remove(task);
+                                });
+                                return false;
+                              } else if (result == true) {
+                                setState(() {});
                               }
                               return false;
                             }
@@ -381,14 +392,19 @@ class _HomeState extends State<Home> {
                             ).colorScheme.primaryContainer.withOpacity(0.5),
                             child: InkWell(
                               onTap: () async {
-                                bool? result = await Navigator.of(context).push(
+                                final result = await Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (context) =>
                                         DetailsPage(task: task),
                                   ),
                                 );
-                                if (result == true) {
-                                  getTasks();
+                                if (result == 'delete') {
+                                  setState(() {
+                                    tasks.remove(task);
+                                    filteredTasks.remove(task);
+                                  });
+                                } else if (result == true) {
+                                  setState(() {});
                                 }
                               },
                               child: Row(

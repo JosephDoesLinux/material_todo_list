@@ -41,6 +41,13 @@ class _DetailsPageState extends State<DetailsPage> {
   void saveTask() async {
     if (_titleController.text.trim().isEmpty) return;
 
+    // update the local task object so we don't have to fetch from server
+    setState(() {
+      widget.task.title = _titleController.text;
+      widget.task.details = _detailsController.text;
+      widget.task.isCompleted = _isCompleted;
+    });
+
     final uri = Uri.parse("$baseUrl/editTask.php");
     try {
       // sending the updated data to the server
@@ -70,7 +77,8 @@ class _DetailsPageState extends State<DetailsPage> {
       await http.post(uri, body: {"id": widget.task.id.toString()});
       // go back to the previous page after deleting
       if (mounted) {
-        Navigator.pop(context, true);
+        // returning 'delete' so the home page knows to remove it from the list
+        Navigator.pop(context, 'delete');
       }
     } catch (error) {
       print("Error deleting task: $error");
