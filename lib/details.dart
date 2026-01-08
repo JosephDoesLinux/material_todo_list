@@ -39,6 +39,8 @@ class _DetailsPageState extends State<DetailsPage> {
 
   // function to save the changes made to the task
   void saveTask() async {
+    if (_titleController.text.trim().isEmpty) return;
+
     final uri = Uri.parse("$baseUrl/editTask.php");
     try {
       // sending the updated data to the server
